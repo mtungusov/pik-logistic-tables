@@ -6,7 +6,8 @@
 
 
 (defonce ui-state (r/atom {:geo-zones-collapsed true
-                           :groups-collapsed true}))
+                           :groups-collapsed true
+                           :dates-collapsed true}))
 
 
 (defn chkbox [label value filter-key subs-checked?]
@@ -83,9 +84,47 @@
       (groups)]]))
 
 
+(defn date-input-from []
+  [:input.input-sm.form-control {:type "text" :name "start"
+                                 :on-change #(println "change!")}])
+
+
+(defn dates-from-to-render []
+  [:div#datepicker.input-daterange.input-group
+   (date-input-from)
+   [:span.input-group-addon "-"]
+   [:input.input-sm.form-control {:type "text" :name "end" :on-change #(println "change!")}]])
+
+
+(defn dates-from-to-did-mount [this]
+  (let [elem (js/$ (r/dom-node this))]
+    (.datepicker elem (clj->js {:format "yyyy-mm-dd"
+                                :endDate "0d"
+                                :language "ru"
+                                :autoclose true
+                                :todayHighlight true}))
+    (-> elem .datepicker (.on "changeDate" (fn [e]
+                                             (let [d (.-target.value e)]
+                                               (println (str d ", element-name: " (.-target.name e)))))))))
+
+
+(defn dates-from-to []
+  (r/create-class {:render dates-from-to-render
+                   :component-did-mount dates-from-to-did-mount}))
+
+
+(defn dates-block [state-key]
+  (let [collapsed (state-key @ui-state)]
+    [:div.dates-block
+     (tool-header "Период" state-key "oi-calendar")
+     [:div {:class (when collapsed "d-none")}
+      [dates-from-to]]]))
+
+
 (defn main-panel []
   [:div.row
    [:div.col-md-auto
+    (dates-block :dates-collapsed)
     (geo-zones-block :geo-zones-collapsed)
     (groups-block :groups-collapsed)]
    [:div.col
