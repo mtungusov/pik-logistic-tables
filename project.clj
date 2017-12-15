@@ -8,7 +8,7 @@
   :min-lein-version "2.8.1"
 
 
-  :dependencies [[org.clojure/clojure "1.9.0-RC2"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async  "0.3.465"]
                  [com.cognitect/transit-cljs "0.8.243"]
@@ -27,7 +27,7 @@
   :profiles {:dev {:dependencies [[binaryage/devtools "0.9.8"]
                                   [figwheel-sidecar "0.5.14"]
                                   [com.cemerick/piggieback "0.2.2"]
-                                  [re-frisk "0.5.2"]]
+                                  [re-frisk "0.5.3"]]
                    :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :cljsbuild
                      {:builds {:client {:source-paths ["src" "dev"]
