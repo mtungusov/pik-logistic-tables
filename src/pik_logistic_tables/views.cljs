@@ -1,6 +1,7 @@
 (ns pik-logistic-tables.views
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
+            [clojure.string]
             [pik-logistic-tables.subs :as subs]
             [pik-logistic-tables.events :as events]))
 
@@ -19,7 +20,7 @@
               :class "form-check-input"
               :value value
               :checked @checked
-              :on-click (fn [e]
+              :on-change (fn [e]
                           (.preventDefault e)
                           (if @checked
                             (rf/dispatch [::events/uncheck-one-checkbox filter-key value])
@@ -129,6 +130,45 @@
       [dates-from-to]]]))
 
 
+(defn show-dates []
+  (let [date-from @(rf/subscribe [::subs/filter-date-from])
+        date-to @(rf/subscribe [::subs/filter-date-to])]
+    [:div {:class (when (or (empty? date-from) (empty? date-to)) "d-none")}
+     [:span.text-info "Период:"] [:span date-from]
+     [:span.text-info "по"] [:span date-to]]))
+
+
+(defn show-selected [label subs-name]
+  (let [items (rf/subscribe [subs-name])]
+    [:div {:class (when (empty? @items) "d-none")}
+     [:span {:class "text-info"} label]
+     (clojure.string/join ", " (sort @items))]))
+
+
+(defn button-refresh []
+  (let [date-from @(rf/subscribe [::subs/filter-date-from])
+        date-to @(rf/subscribe [::subs/filter-date-to])
+        geo-zones @(rf/subscribe [::subs/filter-geo-zones])
+        groups @(rf/subscribe [::subs/filter-groups])
+        hidden (or (empty? date-from)
+                   (empty? date-to)
+                   (empty? geo-zones)
+                   (empty? groups))]
+    [:button.btn.btn-sm.btn-success
+     {:class (when hidden "d-none")
+      :on-click (fn []
+                  (println "Refresh data!"))}
+     "Обновить"]))
+
+
+(defn status-bar []
+  [:div#status-bar
+   (button-refresh)
+   (show-dates)
+   (show-selected "Геозоны:" ::subs/filter-geo-zones)
+   (show-selected "Группы:" ::subs/filter-groups)])
+
+
 (defn main-panel []
   [:div.row
    [:div.col-md-auto
@@ -136,6 +176,7 @@
     (geo-zones-block :geo-zones-collapsed)
     (groups-block :groups-collapsed)]
    [:div.col
+    (status-bar)
     [:div "Table 1"]
     [:div "Table 2"]
     [:div "Table 3"]]])
