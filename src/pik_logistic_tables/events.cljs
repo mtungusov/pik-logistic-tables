@@ -11,7 +11,7 @@
 (rf/reg-event-db
   ::init-db
   (fn [_ _]
-    (let [date-from (util/today- 1)
+    (let [date-from (util/today- 14)
           date-to (util/today)]
       (update-in db/default-db [:filters]
                  merge {:date-from date-from :date-to date-to}))))
@@ -105,3 +105,8 @@
     (let [all-items (set @(rf/subscribe [::subs/groups]))]
       (update-in db [:filters :groups] #(clojure.set/difference all-items %)))))
 
+
+(rf/reg-event-db
+  ::filter-dates-changed
+  (fn [db [_ el-name el-value]]
+    (assoc-in db [:filters (keyword el-name)] el-value)))

@@ -45,7 +45,8 @@
                     {:builds {:client {:source-paths ["src"]
                                        :compiler {:optimizations :advanced
                                                   :closure-defines {goog.DEBUG false}
-                                                  :pretty-print false}}}}}}
+                                                  :pretty-print false
+                                                  :externs ["externs.js"]}}}}}}
 
 
 

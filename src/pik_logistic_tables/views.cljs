@@ -85,15 +85,22 @@
 
 
 (defn date-input-from []
-  [:input.input-sm.form-control {:type "text" :name "start"
-                                 :on-change #(println "change!")}])
+  (let [d @(rf/subscribe [::subs/filter-date-from])]
+    [:input.input-sm.form-control {:type "text" :name "date-from"
+                                   :default-value d}]))
+
+
+(defn date-input-to []
+  (let [d @(rf/subscribe [::subs/filter-date-to])]
+    [:input.input-sm.form-control {:type "text" :name "date-to"
+                                   :default-value d}]))
 
 
 (defn dates-from-to-render []
   [:div#datepicker.input-daterange.input-group
    (date-input-from)
    [:span.input-group-addon "-"]
-   [:input.input-sm.form-control {:type "text" :name "end" :on-change #(println "change!")}]])
+   (date-input-to)])
 
 
 (defn dates-from-to-did-mount [this]
@@ -104,8 +111,9 @@
                                 :autoclose true
                                 :todayHighlight true}))
     (-> elem .datepicker (.on "changeDate" (fn [e]
-                                             (let [d (.-target.value e)]
-                                               (println (str d ", element-name: " (.-target.name e)))))))))
+                                             (let [n (.-target.name e)
+                                                   d (.-target.value e)]
+                                               (rf/dispatch [::events/filter-dates-changed n d])))))))
 
 
 (defn dates-from-to []

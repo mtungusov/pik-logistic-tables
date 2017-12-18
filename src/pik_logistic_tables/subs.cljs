@@ -40,3 +40,16 @@
   ::groups
   (fn [db _]
     (sort (:groups db))))
+
+
+(rf/reg-sub
+  ::filter-date-from
+  (fn [db _]
+    (get-in db [:filters :date-from])))
+
+
+(rf/reg-sub
+  ::filter-date-to
+  (fn [db _]
+    (get-in db [:filters :date-to])))
+
