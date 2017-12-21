@@ -157,7 +157,7 @@
     [:button.btn.btn-sm.btn-success
      {:class (when hidden "d-none")
       :on-click (fn []
-                  (println "Refresh data!"))}
+                  (rf/dispatch [::events/load-data-idle]))}
      "Обновить"]))
 
 
@@ -169,6 +169,68 @@
    (show-selected "Группы:" ::subs/filter-groups)])
 
 
+(defn table-idle-by-geo []
+  (let [items (rf/subscribe [::subs/idle-by-geo])
+        loading @(rf/subscribe [::subs/idle-loading-status :geo])]
+    [:table.table.table-sm.table-striped
+     [:thead
+      [:tr
+       [:th.align-middle.w-50 "Геозона"]
+       [:th.align-middle.w-25.text-center "Кол-во посещений"]
+       [:th.align-middle.w-25.text-center "Среднее время, чч:мм"]]]
+     [:tbody
+      (if loading
+        [:tr [:td {:col-span 3} "загрузка..."]]
+        (doall
+          (for [i @items]
+            [:tr {:key (str "t-geo-" (:zone_label i))}
+             [:td (:zone_label i)]
+             [:td.text-center (:inzone_count i)]
+             [:td.text-center (:avg_time_formatted i)]])))]]))
+
+
+(defn table-idle-by-group []
+  (let [items (rf/subscribe [::subs/idle-by-group])
+        loading @(rf/subscribe [::subs/idle-loading-status :group])]
+    [:table.table.table-sm.table-striped
+     [:thead
+      [:tr
+       [:th.align-middle.w-50 "Группа транспорта"]
+       [:th.align-middle.w-25.text-center "Кол-во посещений"]
+       [:th.align-middle.w-25.text-center "Среднее время, чч:мм"]]]
+     [:tbody
+      (if loading
+        [:tr [:td {:col-span 3} "загрузка..."]]
+        (doall
+          (for [i @items]
+            [:tr {:key (str "t-group-" (:group_title i))}
+             [:td (:group_title i)]
+             [:td.text-center (:inzone_count i)]
+             [:td.text-center (:avg_time_formatted i)]])))]]))
+
+
+(defn table-idle-by-geo-and-group []
+  (let [items (rf/subscribe [::subs/idle-by-geo-and-group])
+        loading @(rf/subscribe [::subs/idle-loading-status :geo-and-group])]
+    [:table.table.table-sm.table-striped
+     [:thead
+      [:tr
+       [:th.align-middle.w-25 "Геозона"]
+       [:th.align-middle.w-25 "Группа транспорта"]
+       [:th.align-middle.w-25.text-center "Кол-во посещений"]
+       [:th.align-middle.w-25.text-center "Среднее время, чч:мм"]]]
+     [:tbody
+      (if loading
+        [:tr [:td {:col-span 4} "загрузка..."]]
+        (doall
+          (for [i @items]
+            [:tr {:key (str "t-geo-and-group" (:zone_label i) "-" (:group_title i))}
+             [:td (:zone_label i)]
+             [:td (:group_title i)]
+             [:td.text-center (:inzone_count i)]
+             [:td.text-center (:avg_time_formatted i)]])))]]))
+
+
 (defn main-panel []
   [:div.row
    [:div.col-md-auto
@@ -177,6 +239,9 @@
     (groups-block :groups-collapsed)]
    [:div.col
     (status-bar)
-    [:div "Table 1"]
-    [:div "Table 2"]
-    [:div "Table 3"]]])
+    [:h4.text-dark "Простой по геозоне"]
+    (table-idle-by-geo)
+    [:h4.text-dark "Простой по типу ТС"]
+    (table-idle-by-group)
+    [:h4.text-dark "Простой по геозоне и типу ТС"]
+    (table-idle-by-geo-and-group)]])

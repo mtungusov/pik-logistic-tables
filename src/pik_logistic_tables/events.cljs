@@ -80,6 +80,112 @@
     (rf/dispatch [::load-groups])))
 
 
+(rf/reg-event-fx
+  ::error-api-load
+  (fn [_ [_ resp]]
+    (let [err (get-in resp [:response :errors])]
+      (js/console.log (str "load API error: " err)))))
+
+
+(defn convert-idle-data [d]
+  (let [t (:avg_time_in_minutes d)]
+    (assoc d :avg_time_formatted (util/format-minutes t))))
+
+
+(defn convert-idle-data-geo-and-group [d]
+  (let [t (:avg_time_in_minutes d)
+        geo (:zone_label d)
+        group (:group_title d)]
+    (assoc d :avg_time_formatted (util/format-minutes t) :order (str geo "-" group))))
+
+
+(rf/reg-event-db
+  ::set-status-idle-loading
+  (fn [db [_ key]]
+    (assoc-in db [:idle-loading key] true)))
+
+
+(rf/reg-event-db
+  ::unset-status-idle-loading
+  (fn [db [_ key]]
+    (assoc-in db [:idle-loading key] false)))
+
+;(rf/dispatch [::unset-status-idle-loading :geo])
+
+(rf/reg-event-db
+  ::idle-by-geo-loaded
+  (fn [db [_ resp]]
+    (rf/dispatch [::unset-status-idle-loading :geo])
+    (let [items (get-in resp [:result])]
+      (assoc-in db [:idle :geo] (map convert-idle-data items)))))
+
+
+(rf/reg-event-db
+  ::idle-by-group-loaded
+  (fn [db [_ resp]]
+    (rf/dispatch [::unset-status-idle-loading :group])
+    (let [items (get-in resp [:result])]
+      (assoc-in db [:idle :group] (map convert-idle-data items)))))
+
+
+(rf/reg-event-db
+  ::idle-by-geo-and-group-loaded
+  (fn [db [_ resp]]
+    (rf/dispatch [::unset-status-idle-loading :geo-and-group])
+    (let [items (get-in resp [:result])]
+      (assoc-in db [:idle :geo-and-group] (map convert-idle-data-geo-and-group items)))))
+
+
+(rf/reg-event-fx
+  ::load-idle-by-geo
+  (fn [_ _]
+    {:http-xhrio {:method :post
+                  :uri (util/uri "/q/idlebygeo")
+                  :params @(rf/subscribe [::subs/filter-for-idle-request])
+                  :timeout 10000
+                  :format (json-request-format)
+                  :response-format (json-response-format {:keywords? true})
+                  :on-success [::idle-by-geo-loaded]
+                  :on-failure [::error-api-load]}}))
+
+
+(rf/reg-event-fx
+  ::load-idle-by-group
+  (fn [_ _]
+    {:http-xhrio {:method :post
+                  :uri (util/uri "/q/idlebygroup")
+                  :params @(rf/subscribe [::subs/filter-for-idle-request])
+                  :timeout 10000
+                  :format (json-request-format)
+                  :response-format (json-response-format {:keywords? true})
+                  :on-success [::idle-by-group-loaded]
+                  :on-failure [::error-api-load]}}))
+
+
+(rf/reg-event-fx
+  ::load-idle-by-geo-and-group
+  (fn [_ _]
+    {:http-xhrio {:method :post
+                  :uri (util/uri "/q/idlebygeoandgroup")
+                  :params @(rf/subscribe [::subs/filter-for-idle-request])
+                  :timeout 10000
+                  :format (json-request-format)
+                  :response-format (json-response-format {:keywords? true})
+                  :on-success [::idle-by-geo-and-group-loaded]
+                  :on-failure [::error-api-load]}}))
+
+
+(rf/reg-event-fx
+  ::load-data-idle
+  (fn [_ _]
+    (rf/dispatch [::set-status-idle-loading :geo])
+    (rf/dispatch [::load-idle-by-geo])
+    (rf/dispatch [::set-status-idle-loading :group])
+    (rf/dispatch [::load-idle-by-group])
+    (rf/dispatch [::set-status-idle-loading :geo-and-group])
+    (rf/dispatch [::load-idle-by-geo-and-group])))
+
+
 (rf/reg-event-db
   ::clear-filter-geo-zones
   (fn [db _]

@@ -9,5 +9,12 @@
 
    :geo-zones #{}
 
-   :groups #{}})
+   :groups #{}
 
+   :idle-loading {:geo false
+                  :group false
+                  :geo-and-group false}
+
+   :idle {:geo []
+          :group []
+          :geo-and-group []}})

@@ -53,3 +53,36 @@
   (fn [db _]
     (get-in db [:filters :date-to])))
 
+
+(rf/reg-sub
+  ::filter-for-idle-request
+  (fn [_ _]
+    {:date_from @(rf/subscribe [::filter-date-from])
+     :date_to   @(rf/subscribe [::filter-date-to])
+     :zones     @(rf/subscribe [::filter-geo-zones])
+     :groups    @(rf/subscribe [::filter-groups])}))
+
+
+(rf/reg-sub
+  ::idle-by-geo
+  (fn [db _]
+    (sort-by :zone_label (get-in db [:idle :geo]))))
+
+
+(rf/reg-sub
+  ::idle-by-group
+  (fn [db _]
+    (sort-by :group_title (get-in db [:idle :group]))))
+
+
+(rf/reg-sub
+  ::idle-by-geo-and-group
+  (fn [db _]
+    (sort-by :order (get-in db [:idle :geo-and-group]))))
+
+
+(rf/reg-sub
+  ::idle-loading-status
+  (fn [db [_ key]]
+    (get-in db [:idle-loading key])))
+
