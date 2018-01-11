@@ -58,4 +58,4 @@
 
 
   :cljsbuild {:builds {:client {:compiler {:main pik-logistic-tables.core
-                                           :output-to "resources/public/js/compiled/app-v0.0.1.js"}}}})
+                                           :output-to "resources/public/js/compiled/app-v0.0.2.js"}}}})

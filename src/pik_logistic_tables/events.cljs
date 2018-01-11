@@ -20,12 +20,14 @@
 (rf/reg-event-db
   ::check-one-checkbox
   (fn [db [_ filter-key value]]
+    (rf/dispatch [::clear-idle-data])
     (update-in db [:filters filter-key] conj value)))
 
 
 (rf/reg-event-db
   ::uncheck-one-checkbox
   (fn [db [_ filter-key value]]
+    (rf/dispatch [::clear-idle-data])
     (update-in db [:filters filter-key] disj value)))
 
 
@@ -85,6 +87,33 @@
   (fn [_ [_ resp]]
     (let [err (get-in resp [:response :errors])]
       (js/console.log (str "load API error: " err)))))
+
+
+
+(rf/reg-event-db
+  ::clear-idle-by-geo
+  (fn [db _]
+    (assoc-in db [:idle :geo] [])))
+
+
+(rf/reg-event-db
+  ::clear-idle-by-group
+  (fn [db _]
+    (assoc-in db [:idle :group] [])))
+
+
+(rf/reg-event-db
+  ::clear-idle-by-geo-and-group
+  (fn [db _]
+    (assoc-in db [:idle :geo-and-group] [])))
+
+
+(rf/reg-event-fx
+  ::clear-idle-data
+  (fn [_ _]
+    (rf/dispatch [::clear-idle-by-geo])
+    (rf/dispatch [::clear-idle-by-group])
+    (rf/dispatch [::clear-idle-by-geo-and-group])))
 
 
 (defn convert-idle-data [d]
@@ -189,18 +218,21 @@
 (rf/reg-event-db
   ::clear-filter-geo-zones
   (fn [db _]
+    (rf/dispatch [::clear-idle-data])
     (assoc-in db [:filters :geo-zones] #{})))
 
 
 (rf/reg-event-db
   ::clear-filter-groups
   (fn [db _]
+    (rf/dispatch [::clear-idle-data])
     (assoc-in db [:filters :groups] #{})))
 
 
 (rf/reg-event-db
   ::invert-filter-geo-zones
   (fn [db _]
+    (rf/dispatch [::clear-idle-data])
     (let [all-items (set @(rf/subscribe [::subs/geo-zones]))]
       (update-in db [:filters :geo-zones] #(clojure.set/difference all-items %)))))
 
@@ -208,6 +240,7 @@
 (rf/reg-event-db
   ::invert-filter-groups
   (fn [db _]
+    (rf/dispatch [::clear-idle-data])
     (let [all-items (set @(rf/subscribe [::subs/groups]))]
       (update-in db [:filters :groups] #(clojure.set/difference all-items %)))))
 
@@ -215,4 +248,5 @@
 (rf/reg-event-db
   ::filter-dates-changed
   (fn [db [_ el-name el-value]]
+    (rf/dispatch [::clear-idle-data])
     (assoc-in db [:filters (keyword el-name)] el-value)))
